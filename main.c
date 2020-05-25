@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 }
 
 void shell_loop() {
-  char *command;
+  char *line;
   char **argv;
   char cwd[PATH_MAX];
   int status = 1;
@@ -37,11 +37,11 @@ void shell_loop() {
       printf("\n%s\n> $ ", cwd);
     }
 
-    command = get_command();
-    argv = get_args(command);
+    line = get_command();
+    argv = get_args(line);
     status = exec_command(argv);
 
-    free(command);
+    free(line);
     free(argv);
   }
 }
@@ -116,7 +116,7 @@ int exec_command(char *argv[]) {
   int pid;
   int status;
 
-
+  // Check for `cd`
   if (strcmp(argv[0], "cd") == 0) {
     chdir(argv[1]);
     return 1;
