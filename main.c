@@ -46,38 +46,6 @@ void shell_loop() {
   }
 }
 
-char **get_args(char *command) {
-  int tok_size = TOK_MAX;
-  char **tokens = malloc(sizeof(char*) * tok_size);
-  char *token;
-  int position = 0;
-
-  if (!tokens) {
-    fprintf(stderr, ALLOCATION_ERROR);
-    exit(-1);
-  }
-
-  token = strtok(command, " ");
-  while(token != NULL) {
-    if (position >= tok_size) {
-      tok_size += TOK_MAX;
-      tokens = realloc(tokens, sizeof(char*) * tok_size);
-
-      if (!tokens) {
-        fprintf(stderr, ALLOCATION_ERROR);
-        exit(-1);
-      }
-    }
-
-    tokens[position] = token;
-    position++;
-
-    token = strtok(NULL, " ");
-  }
-  tokens[position] = NULL;
-  return tokens;
-}
-
 char *get_command() {
   int size = BUFF_MAX;
   char *buffer = malloc(sizeof(char) * size);
@@ -110,6 +78,38 @@ char *get_command() {
     }
     position++;
   }
+}
+
+char **get_args(char *command) {
+  int tok_size = TOK_MAX;
+  char **tokens = malloc(sizeof(char*) * tok_size);
+  char *token;
+  int position = 0;
+
+  if (!tokens) {
+    fprintf(stderr, ALLOCATION_ERROR);
+    exit(-1);
+  }
+
+  token = strtok(command, " ");
+  while(token != NULL) {
+    if (position >= tok_size) {
+      tok_size += TOK_MAX;
+      tokens = realloc(tokens, sizeof(char*) * tok_size);
+
+      if (!tokens) {
+        fprintf(stderr, ALLOCATION_ERROR);
+        exit(-1);
+      }
+    }
+
+    tokens[position] = token;
+    position++;
+
+    token = strtok(NULL, " ");
+  }
+  tokens[position] = NULL;
+  return tokens;
 }
 
 int exec_command(char *argv[]) {
