@@ -13,6 +13,8 @@
 #define ALLOCATION_ERROR "tshell: allocation error\n"
 
 void shell_loop();
+int single_command(char*);
+int many_commands(char*);
 char **get_args(char*);
 char *get_command();
 int exec_command(char**);
@@ -31,23 +33,69 @@ void shell_loop() {
   char **argv;
   char cwd[PATH_MAX];
   int status = 1;
-  int commands_size = TOK_MAX;
-  int commands_count = 0;
-//  char **commands = malloc(sizeof(char) * commands_size);
-  char *command;
-  char *cmd_cpy;
 
   while (status) {
-    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+    if ( getcwd(cwd, sizeof(cwd)) != NULL ) {
       printf("\n%s\n> $ ", cwd);
     }
 
     line = get_command();
-    argv = get_args(line);
-    status = exec_command(argv);
+
+    if (strstr(line, ";") != NULL) {
+      status = many_commands(line);
+    } else {
+      status = single_command(line);
+    }
+    free(line);
+  }
+}
+
+int single_command(char *line) {
+  int final_status = 1;
+  char **argv;
+  int pid;
+
+  pid = fork();
+  argv = get_args(line);
+
+  if (pid == 0) {
+    int return_status = exec_command(argv);
+    exit(return_status);
+  } else if (pid < 0) {
+    perror("tsh");
+    exit(-1);
+  } else {
+    do {
+      waitpid(pid, &final_status, WUNTRACED);
+    } while (!WIFEXITED(final_status) && !WIFSIGNALED(final_status));
+    free(argv);
+    return 1;
+  }
+}
+
+int many_commands(char *line) {
+  int status = 1;
+  int commands_count = 0;
+  char *command, *cmd_cpy;
+  char **argv;
+
+  command = strtok(line, ";");
+  while(command != NULL) {
+    cmd_cpy = malloc(1 + strlen(command));
+    strcpy(cmd_cpy, command);
+
+    argv = get_args(cmd_cpy);
+    printf("Command: %s\n", argv[0]);
+//        status = exec_command(argv);
+
+    command = strtok(NULL, ";");
+    commands_count++;
 
     free(argv);
+    free(cmd_cpy);
   }
+
+  return status;
 }
 
 char *get_command() {
@@ -117,29 +165,15 @@ char **get_args(char *command) {
 }
 
 int exec_command(char *argv[]) {
-  int pid;
-  int status;
-
   // Check for `cd`
   if (strcmp(argv[0], "cd") == 0) {
     chdir(argv[1]);
     return 1;
   }
-  pid = fork();
 
-  if (pid == 0) {
-    // Child to execute the command
-    if (execvp(argv[0], argv) == -1) {
-      perror("tsh");
-      exit(-1);
-    }
-    exit(1);
-  } else if (pid < 0) {
+  if (execvp(argv[0], argv) == -1) {
     perror("tsh");
-  } else {
-    do {
-      waitpid(pid, &status, WUNTRACED);
-    } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+    return -1;
   }
 
   return 1;
