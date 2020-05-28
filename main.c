@@ -17,6 +17,7 @@ int single_command(char*);
 int many_commands(char*);
 char **get_args(char*);
 char *get_command();
+void check_for_cd(char**);
 int exec_command(char**);
 
 int main(int argc, char *argv[]) {
@@ -51,12 +52,13 @@ void shell_loop() {
 }
 
 int single_command(char *line) {
-  int final_status = 1;
+  int final_status;
   char **argv;
   int pid;
 
-  pid = fork();
   argv = get_args(line);
+  check_for_cd(argv);
+  pid = fork();
 
   if (pid == 0) {
     int return_status = exec_command(argv);
@@ -75,24 +77,28 @@ int single_command(char *line) {
 
 int many_commands(char *line) {
   int status = 1;
-  int commands_count = 0;
-  char *command, *cmd_cpy;
+  int command_count = 0;
+  int pid;
+  char *command;
   char **argv;
 
   command = strtok(line, ";");
   while(command != NULL) {
-    cmd_cpy = malloc(1 + strlen(command));
-    strcpy(cmd_cpy, command);
+    pid = fork();
 
-    argv = get_args(cmd_cpy);
-    printf("Command: %s\n", argv[0]);
-//        status = exec_command(argv);
+    if (pid == 0) {
+      argv = get_args(command);
+      int return_status = exec_command(argv);
+      free(argv);
+      exit(return_status);
+    } else {
+      command_count++;
+      command = strtok(NULL, ";");
+    }
+  }
 
-    command = strtok(NULL, ";");
-    commands_count++;
-
-    free(argv);
-    free(cmd_cpy);
+  while (command_count-- > 0) {
+    wait(NULL);
   }
 
   return status;
@@ -164,13 +170,13 @@ char **get_args(char *command) {
   return tokens;
 }
 
-int exec_command(char *argv[]) {
-  // Check for `cd`
+void check_for_cd(char *argv[]) {
   if (strcmp(argv[0], "cd") == 0) {
     chdir(argv[1]);
-    return 1;
   }
+}
 
+int exec_command(char *argv[]) {
   if (execvp(argv[0], argv) == -1) {
     perror("tsh");
     return -1;
