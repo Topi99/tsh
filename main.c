@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <string.h>
+#include <sys/wait.h>
 
 #define BUFF_MAX 1024
 #define TOK_MAX 60
@@ -48,7 +49,9 @@ void shell_loop() {
     if (strstr(line, ";") != NULL) {
       status = many_commands(line);
     } else {
-      status = single_command(line);
+      if (strlen(line) != 0) {
+        status = single_command(line);
+      }
     }
     free(line);
   }
