@@ -21,6 +21,10 @@ void check_for_cd(char**);
 int exec_command(char**);
 
 int main(int argc, char *argv[]) {
+  if (argc > 2) {
+    perror(argv[0]);
+    return -1;
+  }
 
   if (argc == 1) {
     shell_loop();
@@ -31,7 +35,6 @@ int main(int argc, char *argv[]) {
 
 void shell_loop() {
   char *line;
-  char **argv;
   char cwd[PATH_MAX];
   int status = 1;
 
