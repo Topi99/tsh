@@ -31,9 +31,14 @@ void shell_loop() {
   char **argv;
   char cwd[PATH_MAX];
   int status = 1;
+  int commands_size = TOK_MAX;
+  int commands_count = 0;
+//  char **commands = malloc(sizeof(char) * commands_size);
+  char *command;
+  char *cmd_cpy;
 
   while (status) {
-    if ( getcwd(cwd, sizeof(cwd)) != NULL ) {
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
       printf("\n%s\n> $ ", cwd);
     }
 
@@ -41,7 +46,6 @@ void shell_loop() {
     argv = get_args(line);
     status = exec_command(argv);
 
-    free(line);
     free(argv);
   }
 }
