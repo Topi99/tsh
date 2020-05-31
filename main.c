@@ -53,7 +53,6 @@ void shell_loop() {
 
     line = get_command(NULL);
 
-
     if (strstr(line, "quit") != NULL) {
       has_quit = 1;
     }
@@ -119,8 +118,13 @@ int many_commands(char *line) {
   while(command != NULL) {
     pid = fork();
 
+    if (strstr(command, "quit") != NULL) {
+      exit(0);
+    }
+
     if (pid == 0) {
       argv = get_args(command);
+
       int return_status = exec_command(argv);
       free(argv);
       exit(return_status);
