@@ -8,12 +8,14 @@
 #include <limits.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 #define BUFF_MAX 1024
 #define TOK_MAX 60
 #define ALLOCATION_ERROR "tshell: allocation error\n"
 
 void shell_loop();
+int file_loop(char**);
 int single_command(char*);
 int many_commands(char*);
 char **get_args(char*);
@@ -31,6 +33,10 @@ int main(int argc, char *argv[]) {
     shell_loop();
   }
 
+  if (argc == 2) {
+    file_loop(argv);
+  }
+
   return 0;
 }
 
@@ -38,23 +44,44 @@ void shell_loop() {
   char *line;
   char cwd[PATH_MAX];
   int status = 1;
+  int has_quit = 0;
 
-  while (status) {
+  while (status && !has_quit) {
     if ( getcwd(cwd, sizeof(cwd)) != NULL ) {
       printf("\n%s\n> $ ", cwd);
     }
 
-    line = get_command();
+    line = get_command(NULL);
+
+
+    if (strstr(line, "quit") != NULL) {
+      has_quit = 1;
+    }
 
     if (strstr(line, ";") != NULL) {
       status = many_commands(line);
     } else {
       if (strlen(line) != 0) {
-        status = single_command(line);
+        if (!has_quit) {
+          status = single_command(line);
+        }
       }
     }
     free(line);
   }
+}
+
+int file_loop(char *argv[]) {
+  int file;
+
+  if ( (file = open(argv[1], O_RDONLY)) < 0 ) {
+    perror(argv[0]);
+    return -1;
+  }
+
+
+
+  return 0;
 }
 
 int single_command(char *line) {
