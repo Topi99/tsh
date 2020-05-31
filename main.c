@@ -13,6 +13,7 @@
 #define BUFF_MAX 1024
 #define TOK_MAX 60
 #define ALLOCATION_ERROR "tshell: allocation error\n"
+#define MAX_LINE_LEN 512
 
 void shell_loop();
 int file_loop(char**);
@@ -71,14 +72,29 @@ void shell_loop() {
 }
 
 int file_loop(char *argv[]) {
-  int file;
+  int fd;
+  char line[MAX_LINE_LEN];
+  int has_quit = 0;
 
-  if ( (file = open(argv[1], O_RDONLY)) < 0 ) {
+  if ( (fd = open(argv[1], O_RDONLY)) < 0 ) {
     perror(argv[0]);
     return -1;
   }
 
+  FILE *file = fdopen(fd, "r");
 
+  while (fgets(line, MAX_LINE_LEN, file) && !has_quit) {
+    if (strstr(line, "quit") != NULL) {
+      has_quit = 1;
+    }
+    if (strstr(line, ";") != NULL) {
+      many_commands(line);
+    } else {
+      if (strlen(line) != 0 && !has_quit) {
+        single_command(line);
+      }
+    }
+  }
 
   return 0;
 }
@@ -87,6 +103,7 @@ int single_command(char *line) {
   int final_status;
   char **argv;
   int pid;
+
 
   argv = get_args(line);
   check_for_cd(argv);
