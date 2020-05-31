@@ -2,13 +2,13 @@
  * Author: Topiltzin Hernández Mares
  */
 
+#include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <limits.h>
 #include <string.h>
 #include <sys/wait.h>
-#include <fcntl.h>
+#include <unistd.h>
 
 #define BUFF_MAX 1024
 #define TOK_MAX 60
@@ -95,6 +95,8 @@ int file_loop(char *argv[]) {
       }
     }
   }
+
+  close(fd);
 
   return 0;
 }
